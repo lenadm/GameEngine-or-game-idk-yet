@@ -1,3 +1,5 @@
-/build
+/build/*
 /assets
+/.cache
 *.exe
+compile_commands.json
