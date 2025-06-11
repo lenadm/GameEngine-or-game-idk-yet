@@ -3,7 +3,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "shader.h"
+#include "shader-program.h"
 
 void getFramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
@@ -37,6 +37,8 @@ int main() {
     glfwSetFramebufferSizeCallback(window, getFramebufferSizeCallback);
     glViewport(0, 0, 1920, 1080);
 
+    // A VAO is is like a manifest for a buffer, it tells the gpu all it needs
+    // to know to use the data in the buffer.
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -51,27 +53,19 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleIndices), triangleIndices, GL_STATIC_DRAW);
 
-    Shader::handle vertexShader = Shader::make("shaders/triangle.vert", GL_VERTEX_SHADER);
-    Shader::handle fragShader = Shader::make("shaders/triangle.frag", GL_FRAGMENT_SHADER);
-    unsigned int shaderProgram = 0;
-    {
-        shaderProgram = glCreateProgram();
-        glAttachShader(shaderProgram, vertexShader);
-        glAttachShader(shaderProgram, fragShader);
-        glLinkProgram(shaderProgram);
-    } 
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragShader);
-
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
 
+    ShaderProgram shader;
+    shader.addShader("shaders/triangle.vert", GL_VERTEX_SHADER);
+    shader.addShader("shaders/triangle.frag", GL_FRAGMENT_SHADER);
+    shader.build();
+    shader.bind();
 
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
         glClear(GL_COLOR_BUFFER_BIT);
         glClearColor(0.39, 0.584, 0.929, 1);
-        glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -83,8 +77,7 @@ int main() {
     return 0;
 }
 
-void getFramebufferSizeCallback(GLFWwindow* window, int width, int height){
-    (void) window;
+void getFramebufferSizeCallback(GLFWwindow*, int width, int height){
     glViewport(0, 0, width, height);
 }
 
