@@ -1,3 +1,4 @@
+#include <optional>
 #include <string>
 #include <iostream>
 #include <glad/glad.h>
@@ -56,11 +57,17 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
 
-    ShaderProgram shader;
-    shader.addShader("shaders/triangle.vert", GL_VERTEX_SHADER);
-    shader.addShader("shaders/triangle.frag", GL_FRAGMENT_SHADER);
-    shader.build();
-    shader.bind();
+    std::optional<std::string> vertexSource = Shaders::readFromFile("shaders/triangle.vert");
+    std::optional<std::string> fragSource = Shaders::readFromFile("shaders/triangle.frag");
+    if ( !vertexSource || !fragSource ) {
+        std::cout << "error Retrieving shader source code\n";
+        return 1;
+    }
+    Shaders::Shaders shaders;
+    shaders.vertexID = Shaders::compileShader(vertexSource.value(), GL_VERTEX_SHADER);
+    shaders.fragmentID = Shaders::compileShader(fragSource.value(), GL_FRAGMENT_SHADER);
+    Shaders::buildProgram(shaders);
+    Shaders::bindProgram(shaders.programID);
 
     while (!glfwWindowShouldClose(window)) {
         processInput(window);

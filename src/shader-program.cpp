@@ -10,26 +10,9 @@
 
 const std::filesystem::path g_assetsRoot = std::filesystem::current_path() / "assets";
 
-ShaderProgram::ShaderProgram() { }
-
-bool ShaderProgram::addShader(std::string relativePath, GLenum shaderType) {
-    handle newShader = 0;
-
-
-    std::optional<std::string> shaderSource = readFromFile(g_assetsRoot / relativePath);
-    if (!shaderSource) {
-        std::string shader;
-        switch (shaderType) {
-            case GL_FRAGMENT_SHADER: { shader = "fragment"; break; }
-            case GL_VERTEX_SHADER:   { shader = "vertex";   break; }
-            default:                 { shader = "unknown";  break; }
-        }
-        std::cout << "Error occured whilst trying to compile: " << shader << "shader" << "\n";
-        return false;
-    }
-    const char* sourcePtr = shaderSource.value().c_str();
-
-    newShader = glCreateShader(shaderType);
+GLuint Shaders::compileShader(std::string shaderSource, GLenum shaderType) {
+    const char* sourcePtr = shaderSource.c_str();
+    GLuint newShader = glCreateShader(shaderType);
     glShaderSource(newShader, 1, &sourcePtr, nullptr);
 
     glCompileShader(newShader);
@@ -39,51 +22,46 @@ bool ShaderProgram::addShader(std::string relativePath, GLenum shaderType) {
         char infoLog[512];
         glGetShaderInfoLog(newShader, 512, nullptr, infoLog);
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << "\n";
-        return false;
+        return 0;
     }
 
-    switch (shaderType) {
-        case GL_VERTEX_SHADER: { this->vertexID_ = newShader; break; }
-        case GL_FRAGMENT_SHADER: { this->fragmentID_ = newShader; break; }
-        default: { std::cout << "Unkown shaderType, skipping: " << shaderType; break;}
-    }
-    return true;
+    return newShader;
 }
 
-void ShaderProgram::bind() {
-    glUseProgram(programID_);
+void Shaders::bindProgram(GLuint programID) {
+    glUseProgram(programID);
 }
 
-void ShaderProgram::unbind() {
+void Shaders::unbindProgram() {
     glUseProgram(0);
 }
 
-bool ShaderProgram::build() {
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexID_);
-    glAttachShader(shaderProgram, fragmentID_);
-    glLinkProgram(shaderProgram);
-    programID_ = shaderProgram;
-    glDeleteShader(vertexID_);
-    glDeleteShader(fragmentID_);
+bool Shaders::buildProgram(Shaders &program) {
+    GLuint programID = glCreateProgram();
+    glAttachShader(programID, program.vertexID);
+    glAttachShader(programID, program.fragmentID);
+    glLinkProgram(programID);
+    program.programID = programID;
     return true;
     // TODO: Add linking error handling
 }
 
-std::optional<std::string> ShaderProgram::readFromFile(std::filesystem::path pathToShader) {
+std::optional<std::string> Shaders::readFromFile(std::filesystem::path pathToShader) {
+    pathToShader = g_assetsRoot / pathToShader;
+
     if (!std::filesystem::exists(pathToShader)) {
-        std::cout << "Shader does not exist at this path: " + pathToShader.string();
+        std::cout << "Shader does not exist at this path: " + pathToShader.string() << "\n";
         return std::nullopt;
     } 
 
     if (!std::filesystem::is_regular_file(pathToShader)) {
-        std::cout << "Shader path exists but is not a file: " + pathToShader.string();
+        std::cout << "Shader path exists but is not a file: " + pathToShader.string() << "\n";
         return std::nullopt;
     }
 
     std::ifstream file(pathToShader);
     if (!file) {
-        std::cout << "Unable to open shader: " + pathToShader.string();
+        std::cout << "Unable to open shader: " + pathToShader.string() << "\n";
         return std::nullopt;
     }
 
