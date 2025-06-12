@@ -36,7 +36,7 @@ void Shaders::unbindProgram() {
     glUseProgram(0);
 }
 
-bool Shaders::buildProgram(Shaders &program) {
+bool Shaders::buildProgram(IDs &program) {
     GLuint programID = glCreateProgram();
     glAttachShader(programID, program.vertexID);
     glAttachShader(programID, program.fragmentID);

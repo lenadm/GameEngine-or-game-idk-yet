@@ -6,7 +6,7 @@
 
 
 namespace Shaders {
-    struct Shaders {
+    struct IDs {
         GLuint programID = 0;
         GLuint vertexID = 0;
         GLuint fragmentID = 0;
@@ -15,7 +15,7 @@ namespace Shaders {
     std::optional<std::string> readFromFile(std::filesystem::path pathToShader);
     GLuint compileShader(std::string shaderSource, GLenum shaderType);
 
-    bool buildProgram(Shaders &program);
+    bool buildProgram(IDs &program);
 
     void bindProgram(GLuint programID);
     void unbindProgram();

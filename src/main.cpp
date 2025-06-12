@@ -63,7 +63,7 @@ int main() {
         std::cout << "error Retrieving shader source code\n";
         return 1;
     }
-    Shaders::Shaders shaders;
+    Shaders::IDs shaders;
     shaders.vertexID = Shaders::compileShader(vertexSource.value(), GL_VERTEX_SHADER);
     shaders.fragmentID = Shaders::compileShader(fragSource.value(), GL_FRAGMENT_SHADER);
     Shaders::buildProgram(shaders);
