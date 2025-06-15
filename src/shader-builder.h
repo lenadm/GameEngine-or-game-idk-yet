@@ -1,17 +1,21 @@
 #include <glad/glad.h>
 #include <string>
 #include <optional>
+#include <array>
 
 #include "shader-program.h"
 
 class ShaderBuilder {
     public:
         ShaderBuilder& addShader(const std::string& shaderSource, GLenum shaderType);
-        std::optional<Shader::ShaderProgram> buildProgram();
+        std::optional<ShaderProgram> buildProgram();
         ~ShaderBuilder();
 
     private:
-        GLuint IDs[8] = {0};
-        GLenum Types[8] = {0};
+        struct ShaderEntry {
+            GLuint id;
+            GLenum type;
+        };
+        std::array<ShaderEntry, 8> shaders{};
         size_t count = 0;
 };

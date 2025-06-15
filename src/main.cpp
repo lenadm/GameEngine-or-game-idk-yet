@@ -15,15 +15,14 @@ void processInput(GLFWwindow* window);
 std::optional<std::string> readFromFile(std::filesystem::path pathToShader);
 
 const float verts[] = {
-    0.5f, 0.5f, 0.0f,
-    -0.5f, 0.5f, 0.0f,
-    0.5f, -0.5f, 0.0f,
-    -0.5f, -0.5f, 0.0f,
+    //positions         colors
+    0.0f, 0.5f, 0.0f,   0.0f, 0.0f, 1.0f, // Top middle
+    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // Bottom left
+    0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f, // Bottom Right
 };
 
 unsigned int triangleIndices[] = {
     0, 1, 2,
-    1, 2, 3,
 };
 
 int main() {
@@ -43,8 +42,6 @@ int main() {
     glfwSetFramebufferSizeCallback(window, getFramebufferSizeCallback);
     glViewport(0, 0, 1920, 1080);
 
-    // A VAO is is like a manifest for a buffer, it tells the gpu all it needs
-    // to know to use the data in the buffer.
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -59,8 +56,11 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleIndices), triangleIndices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     std::optional<std::string> vertexSource = readFromFile("shaders/triangle.vert");
     std::optional<std::string> fragSource = readFromFile("shaders/triangle.frag");
@@ -69,15 +69,15 @@ int main() {
         return 1;
     }
 
-    Shader::ShaderProgram prog = ShaderBuilder()
+    ShaderProgram prog = ShaderBuilder()
         .addShader(vertexSource.value(), GL_VERTEX_SHADER)
         .addShader(fragSource.value(), GL_FRAGMENT_SHADER)
-        .buildProgram().value_or(Shader::ShaderProgram {0});
-    if (!prog.handle) {
+        .buildProgram().value_or(ShaderProgram(0));
+    if (!prog.id()) {
         std::cout << "error linking shader Program";
         return 1;
     }
-    Shader::bindProgramToOpenGL(prog);
+    prog.bind();
 
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
@@ -86,7 +86,7 @@ int main() {
 
         float timeValue = glfwGetTime();
         float greenValue = sin(timeValue) / 2.0f + 0.5f;
-        Shader::uniformSetFloat(prog, "green", greenValue);
+        prog.uniformSetFloat("green", greenValue);
 
         glBindVertexArray(VAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);

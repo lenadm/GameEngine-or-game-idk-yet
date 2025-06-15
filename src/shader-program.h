@@ -4,17 +4,20 @@
 #include <GLFW/glfw3.h>
 #include <string>
 
-namespace Shader {
-    struct ShaderProgram {
+class ShaderProgram {
+    public:
+        ShaderProgram(GLuint program) : handle(program) {}
+
+        GLuint id() const { return handle; }
+
+        void uniformSetBool(const std::string& name, bool value);
+        void uniformSetInt(const std::string& name, int value);
+        void uniformSetFloat(const std::string& name, float value);
+
+        void bind();
+        void unbind();
+        
+        ~ShaderProgram();
+    private:
         GLuint handle = 0;
-    };
-
-    void uniformSetBool(ShaderProgram& prog, const std::string& name, bool value);
-    void uniformSetInt(ShaderProgram& prog, const std::string& name, int value);
-    void uniformSetFloat(ShaderProgram& prog, const std::string& name, float value);
-
-    void bindProgramToOpenGL(ShaderProgram prog);
-    void unbindProgramFromOpenGL();
-    
-    void destroyShaderProgram(ShaderProgram& prog);
 };
