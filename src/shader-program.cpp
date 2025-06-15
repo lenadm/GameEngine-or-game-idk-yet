@@ -5,8 +5,6 @@
 
 #include "shader-program.h"
 
-
-
 void Shader::uniformSetBool(Shader::ShaderProgram& prog, const std::string& name, bool value) {
     glUniform1i(glGetUniformLocation(prog.handle, name.c_str()), static_cast<int>(value));
 }

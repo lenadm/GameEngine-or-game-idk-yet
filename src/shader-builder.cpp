@@ -51,7 +51,7 @@ static GLuint compileShader(const std::string& shaderSource, const GLenum shader
     if (!success) {
         char infoLog[512];
         glGetShaderInfoLog(newShader, 512, nullptr, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << "\n";
+        std::cout << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << "\n" << shaderSource << "\n";
         return 0;
     }
 
