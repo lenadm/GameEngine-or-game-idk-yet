@@ -7,7 +7,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 add_subdirectory(external/GLFW)
 add_subdirectory(external/glad)
 
-add_executable(${PROJECT_NAME} src/main.cpp src/shader-program.cpp)
+add_executable(${PROJECT_NAME} 
+src/main.cpp
+src/shader-program.cpp
+src/shader-builder.cpp
+)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw opengl32)
 

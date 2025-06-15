@@ -3,11 +3,16 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <math.h>
+#include <filesystem>
+#include <fstream>
 
 #include "shader-program.h"
+#include "shader-builder.h"
 
 void getFramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
+std::optional<std::string> readFromFile(std::filesystem::path pathToShader);
 
 const float verts[] = {
     0.5f, 0.5f, 0.0f,
@@ -57,26 +62,37 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
 
-    std::optional<std::string> vertexSource = Shaders::readFromFile("shaders/triangle.vert");
-    std::optional<std::string> fragSource = Shaders::readFromFile("shaders/triangle.frag");
+    std::optional<std::string> vertexSource = readFromFile("shaders/triangle.vert");
+    std::optional<std::string> fragSource = readFromFile("shaders/triangle.frag");
     if ( !vertexSource || !fragSource ) {
         std::cout << "error Retrieving shader source code\n";
         return 1;
     }
-    Shaders::IDs shaders;
-    shaders.vertexID = Shaders::compileShader(vertexSource.value(), GL_VERTEX_SHADER);
-    shaders.fragmentID = Shaders::compileShader(fragSource.value(), GL_FRAGMENT_SHADER);
-    Shaders::buildProgram(shaders);
-    Shaders::bindProgram(shaders.programID);
+
+    Shader::ShaderProgram prog = ShaderBuilder()
+        .addShader(vertexSource.value(), GL_VERTEX_SHADER)
+        .addShader(fragSource.value(), GL_FRAGMENT_SHADER)
+        .buildProgram().value_or(Shader::ShaderProgram {0});
+    if (!prog.handle) {
+        std::cout << "error linking shader Program";
+        return 1;
+    }
+    Shader::bindProgramToOpenGL(prog);
 
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
+
         glClear(GL_COLOR_BUFFER_BIT);
-        glClearColor(0.39, 0.584, 0.929, 1);
+
+        float timeValue = glfwGetTime();
+        float greenValue = sin(timeValue) / 2.0f + 0.5f;
+        Shader::uniformSetFloat(prog, "green", greenValue);
+
         glBindVertexArray(VAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -92,4 +108,27 @@ void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
+}
+
+std::optional<std::string> readFromFile(std::filesystem::path pathToShader) {
+    const std::filesystem::path assetsRoot = std::filesystem::current_path() / "assets";
+    pathToShader = assetsRoot / pathToShader;
+
+    if (!std::filesystem::exists(pathToShader)) {
+        std::cout << "Shader does not exist at this path: " + pathToShader.string() << "\n";
+        return std::nullopt;
+    } 
+
+    if (!std::filesystem::is_regular_file(pathToShader)) {
+        std::cout << "Shader path exists but is not a file: " + pathToShader.string() << "\n";
+        return std::nullopt;
+    }
+
+    std::ifstream file(pathToShader);
+    if (!file) {
+        std::cout << "Unable to open shader: " + pathToShader.string() << "\n";
+        return std::nullopt;
+    }
+
+    return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 }
