@@ -5,19 +5,39 @@
 #include <string>
 
 class ShaderProgram {
-    public:
-        ShaderProgram(GLuint program) : handle(program) {}
+public:
+    ShaderProgram() = delete;
+    ShaderProgram(GLuint program) : handle(program) {}
 
-        GLuint id() const { return handle; }
+    ShaderProgram(const ShaderProgram&) = delete;
+    ShaderProgram& operator=(const ShaderProgram) = delete;
 
-        void uniformSetBool(const std::string& name, bool value);
-        void uniformSetInt(const std::string& name, int value);
-        void uniformSetFloat(const std::string& name, float value);
+    ShaderProgram(ShaderProgram&& other) : handle(other.handle) {
+        other.handle = 0;
+    };
 
-        void bind();
-        void unbind();
-        
-        ~ShaderProgram();
-    private:
-        GLuint handle = 0;
+    ShaderProgram& operator=(ShaderProgram&& other) {
+        if (this != &other) {
+            if (handle != 0) {
+                glDeleteProgram(handle);
+            }
+
+            handle = other.handle;
+            other.handle = 0;
+        }
+        return *this;
+    }
+
+    GLuint id() const { return handle; }
+
+    void uniformSetBool(const std::string& name, bool value);
+    void uniformSetInt(const std::string& name, int value);
+    void uniformSetFloat(const std::string& name, float value);
+
+    void bind();
+    void unbind();
+
+    ~ShaderProgram();
+private:
+    GLuint handle = 0;
 };
