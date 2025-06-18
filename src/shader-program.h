@@ -7,28 +7,28 @@
 class ShaderProgram {
 public:
     ShaderProgram() = delete;
-    ShaderProgram(GLuint program) : handle(program) {}
+    ShaderProgram(GLuint program) : m_handle(program) {}
 
     ShaderProgram(const ShaderProgram&) = delete;
     ShaderProgram& operator=(const ShaderProgram) = delete;
 
-    ShaderProgram(ShaderProgram&& other) : handle(other.handle) {
-        other.handle = 0;
+    ShaderProgram(ShaderProgram&& other) : m_handle(other.m_handle) {
+        other.m_handle = 0;
     };
 
     ShaderProgram& operator=(ShaderProgram&& other) {
         if (this != &other) {
-            if (handle != 0) {
-                glDeleteProgram(handle);
+            if (m_handle != 0) {
+                glDeleteProgram(m_handle);
             }
 
-            handle = other.handle;
-            other.handle = 0;
+            m_handle = other.m_handle;
+            other.m_handle = 0;
         }
         return *this;
     }
 
-    GLuint id() const { return handle; }
+    GLuint id() const { return m_handle; }
 
     void uniformSetBool(const std::string& name, bool value);
     void uniformSetInt(const std::string& name, int value);
@@ -39,5 +39,5 @@ public:
 
     ~ShaderProgram();
 private:
-    GLuint handle = 0;
+    GLuint m_handle = 0;
 };

@@ -10,21 +10,21 @@ ShaderBuilder& ShaderBuilder::addShader(
     const std::string& shaderSource,
     const GLenum shaderType
 ) {
-    if (count >= 8) {
+    if (m_count >= 8) {
         std::cout << "Warning: tried adding >8 shaders to builder\n";
         return *this;
     }
 
-    shaders[count].id = compileShader(shaderSource, shaderType);
-    shaders[count].type = shaderType;
-    count++;
+    m_shaders[m_count].m_id = compileShader(shaderSource, shaderType);
+    m_shaders[m_count].m_type = shaderType;
+    m_count++;
     return *this;
 }
 
 std::optional<ShaderProgram> ShaderBuilder::buildProgram() {
     GLuint shaderProgram = glCreateProgram();
-    for (size_t i = 0; i <= count; i++) {
-        glAttachShader(shaderProgram, shaders[i].id);
+    for (size_t i = 0; i <= m_count; i++) {
+        glAttachShader(shaderProgram, m_shaders[i].m_id);
     }
     glLinkProgram(shaderProgram);
     GLint linkStatus; 
@@ -36,8 +36,8 @@ std::optional<ShaderProgram> ShaderBuilder::buildProgram() {
 }
 
 ShaderBuilder::~ShaderBuilder() {
-    for (size_t i = 0; i < count; i++) {
-        glDeleteShader(shaders[i].id);
+    for (size_t i = 0; i < m_count; i++) {
+        glDeleteShader(m_shaders[i].m_id);
     }
 }
 

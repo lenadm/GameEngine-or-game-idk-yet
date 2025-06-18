@@ -1,7 +1,6 @@
 #include <glad/glad.h>
 #include <string>
 #include <optional>
-#include <array>
 
 #include "shader-program.h"
 
@@ -12,10 +11,11 @@ class ShaderBuilder {
         ~ShaderBuilder();
 
     private:
+    // Todo: Maybe make this struct public?
         struct ShaderEntry {
-            GLuint id;
-            GLenum type;
+            GLuint m_id;
+            GLenum m_type;
         };
-        std::array<ShaderEntry, 8> shaders{};
-        size_t count = 0;
+        ShaderEntry m_shaders[8];
+        size_t m_count = 0;
 };
