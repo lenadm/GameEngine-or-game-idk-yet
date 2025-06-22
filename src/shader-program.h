@@ -30,9 +30,9 @@ public:
 
     GLuint id() const { return m_handle; }
 
-    void uniformSetBool(const std::string& name, bool value);
-    void uniformSetInt(const std::string& name, int value);
-    void uniformSetFloat(const std::string& name, float value);
+    void uniformSet1b(const std::string& name, bool value);
+    void uniformSet1i(const std::string& name, int value);
+    void uniformSet1f(const std::string& name, float value);
 
     void bind();
     void unbind();

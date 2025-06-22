@@ -131,6 +131,11 @@ void processInput(GLFWwindow* window) {
     }
 }
 
+/*
+    - the cwd matters
+    - the layout of the assets folder matters
+*/
+
 std::optional<std::string> readFromFile(std::filesystem::path pathToShader) {
     pathToShader = g_assetsRoot / pathToShader;
 

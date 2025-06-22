@@ -5,15 +5,15 @@
 
 #include "shader-program.h"
 
-void ShaderProgram::uniformSetBool(const std::string& name, bool value) {
+void ShaderProgram::uniformSet1b(const std::string& name, bool value) {
     glUniform1i(glGetUniformLocation(m_handle, name.c_str()), static_cast<int>(value));
 }
 
-void ShaderProgram::uniformSetInt(const std::string& name, int value) {
+void ShaderProgram::uniformSet1i(const std::string& name, int value) {
     glUniform1i(glGetUniformLocation(m_handle, name.c_str()), value);
 }
 
-void ShaderProgram::uniformSetFloat(const std::string& name, float value) {
+void ShaderProgram::uniformSet1f(const std::string& name, float value) {
     glUniform1f(glGetUniformLocation(m_handle, name.c_str()), value);
 }
 
