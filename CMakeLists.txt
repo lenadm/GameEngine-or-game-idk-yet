@@ -12,6 +12,8 @@ add_executable(${PROJECT_NAME}
 src/main.cpp
 src/shader-program.cpp
 src/shader-builder.cpp
+src/vao.cpp
+src/opengl-debug.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw opengl32 stb_image)

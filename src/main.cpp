@@ -6,23 +6,30 @@
 #include <math.h>
 #include <filesystem>
 #include <fstream>
+#include <stb_image.h>
 
 #include "shader-program.h"
 #include "shader-builder.h"
+#include "vao.h"
+#include "opengl-debug.h"
 
 void getFramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 std::optional<std::string> readFromFile(std::filesystem::path pathToShader);
 
+const std::filesystem::path g_assetsRoot = std::filesystem::current_path() / "assets";
+
 const float verts[] = {
-    //positions         colors
-    0.0f, 0.5f, 0.0f,   0.0f, 0.0f, 1.0f, // Top middle
-    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, // Bottom left
-    0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f, // Bottom Right
+    // positions          // colors           // texture coords
+     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
+     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
+    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
+    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
 };
 
-unsigned int triangleIndices[] = {
+const unsigned int triangleIndices[] = {
     0, 1, 2,
+    2, 3, 0,
 };
 
 int main() {
@@ -39,12 +46,10 @@ int main() {
         return 1;
     }
 
+    ENABLE_DEBUG_OUTPUT();
+
     glfwSetFramebufferSizeCallback(window, getFramebufferSizeCallback);
     glViewport(0, 0, 1920, 1080);
-
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
 
     unsigned int VBO;
     glGenBuffers(1, &VBO);
@@ -56,11 +61,13 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleIndices), triangleIndices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) 0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *) (3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    VAO vao;
+    vao.bindVBO(VBO);
+    vao.bindEBO(EBO);
+    vao.addBufferAttributes(0, 3, GL_FLOAT);
+    vao.addBufferAttributes(1, 3, GL_FLOAT);
+    vao.addBufferAttributes(2, 2, GL_FLOAT);
+    vao.setBufferAttributes();
 
     std::optional<std::string> vertexSource = readFromFile("shaders/triangle.vert");
     std::optional<std::string> fragSource = readFromFile("shaders/triangle.frag");
@@ -69,26 +76,40 @@ int main() {
         return 1;
     }
 
-    ShaderProgram prog = ShaderBuilder()
+    std::optional<ShaderProgram> maybeProg = ShaderBuilder()
         .addShader(vertexSource.value(), GL_VERTEX_SHADER)
         .addShader(fragSource.value(), GL_FRAGMENT_SHADER)
-        .buildProgram().value_or(ShaderProgram(0));
-    if (!prog.id()) {
+        .buildProgram();
+    if (!maybeProg) {
         std::cout << "error linking shader Program";
         return 1;
     }
+    ShaderProgram prog = std::move(*maybeProg);
     prog.bind();
+
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load(
+        (g_assetsRoot / (std::filesystem::path) "textures/container.jpg").string().c_str(),
+        &width, &height, &nrChannels, 0
+    );
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    } else {
+        std::cout << "Failed to load texture\n";
+    }
+    stbi_image_free(data);
 
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        float timeValue = glfwGetTime();
-        float greenValue = sin(timeValue) / 2.0f + 0.5f;
-        prog.uniformSetFloat("green", greenValue);
-
-        glBindVertexArray(VAO);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        vao.bind();
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
@@ -111,8 +132,7 @@ void processInput(GLFWwindow* window) {
 }
 
 std::optional<std::string> readFromFile(std::filesystem::path pathToShader) {
-    const std::filesystem::path assetsRoot = std::filesystem::current_path() / "assets";
-    pathToShader = assetsRoot / pathToShader;
+    pathToShader = g_assetsRoot / pathToShader;
 
     if (!std::filesystem::exists(pathToShader)) {
         std::cout << "Shader does not exist at this path: " + pathToShader.string() << "\n";
