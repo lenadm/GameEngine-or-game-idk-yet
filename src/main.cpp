@@ -12,12 +12,12 @@
 #include "shader-builder.h"
 #include "vao.h"
 #include "opengl-debug.h"
+#include "asset-path-resolver.h"
 
 void getFramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 std::optional<std::string> readFromFile(std::filesystem::path pathToShader);
 
-const std::filesystem::path g_assetsRoot = std::filesystem::current_path() / "assets";
 
 const float verts[] = {
     // positions          // colors           // texture coords
@@ -69,8 +69,11 @@ int main() {
     vao.addBufferAttributes(2, 2, GL_FLOAT);
     vao.setBufferAttributes();
 
-    std::optional<std::string> vertexSource = readFromFile("shaders/triangle.vert");
-    std::optional<std::string> fragSource = readFromFile("shaders/triangle.frag");
+    AssetPathResolver apr;
+    apr.populateRegistry();
+
+    std::optional<std::string> vertexSource = readFromFile(apr.resolvePath("triangle.vert"));
+    std::optional<std::string> fragSource = readFromFile(apr.resolvePath("triangle.frag"));
     if ( !vertexSource || !fragSource ) {
         std::cout << "error Retrieving shader source code\n";
         return 1;
@@ -91,10 +94,8 @@ int main() {
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
     int width, height, nrChannels;
-    unsigned char *data = stbi_load(
-        (g_assetsRoot / (std::filesystem::path) "textures/container.jpg").string().c_str(),
-        &width, &height, &nrChannels, 0
-    );
+    std::string path = apr.resolvePath("container.jpg").string();
+    unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -131,14 +132,7 @@ void processInput(GLFWwindow* window) {
     }
 }
 
-/*
-    - the cwd matters
-    - the layout of the assets folder matters
-*/
-
 std::optional<std::string> readFromFile(std::filesystem::path pathToShader) {
-    pathToShader = g_assetsRoot / pathToShader;
-
     if (!std::filesystem::exists(pathToShader)) {
         std::cout << "Shader does not exist at this path: " + pathToShader.string() << "\n";
         return std::nullopt;
