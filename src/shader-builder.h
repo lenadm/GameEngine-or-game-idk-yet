@@ -2,12 +2,10 @@
 #include <string>
 #include <optional>
 
-#include "shader-program.h"
-
 class ShaderBuilder {
     public:
         ShaderBuilder& addShader(const std::string& shaderSource, GLenum shaderType);
-        std::optional<ShaderProgram> buildProgram();
+        std::optional<GLuint> build();
         ~ShaderBuilder();
 
     private:

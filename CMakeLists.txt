@@ -11,7 +11,6 @@ add_subdirectory(external/whereami)
 
 add_executable(${PROJECT_NAME} 
 src/main.cpp
-src/shader-program.cpp
 src/shader-builder.cpp
 src/vao.cpp
 src/opengl-debug.cpp
@@ -27,7 +26,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     external/whereami/src
 )
 
-target_compile_options(${PROJECT_NAME} PRIVATE -g -Wall -Wextra -Wpedantic)
+target_compile_options(${PROJECT_NAME} PRIVATE -s -Wall -Wextra -Wpedantic)
 
 # Post-build step to copy the executable to the top-level directory
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

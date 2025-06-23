@@ -8,7 +8,6 @@
 #include <fstream>
 #include <stb_image.h>
 
-#include "shader-program.h"
 #include "shader-builder.h"
 #include "vao.h"
 #include "opengl-debug.h"
@@ -79,16 +78,16 @@ int main() {
         return 1;
     }
 
-    std::optional<ShaderProgram> maybeProg = ShaderBuilder()
+    std::optional<GLuint> maybeProg = ShaderBuilder()
         .addShader(vertexSource.value(), GL_VERTEX_SHADER)
         .addShader(fragSource.value(), GL_FRAGMENT_SHADER)
-        .buildProgram();
+        .build();
     if (!maybeProg) {
         std::cout << "error linking shader Program";
         return 1;
     }
-    ShaderProgram prog = std::move(*maybeProg);
-    prog.bind();
+    GLuint prog = *maybeProg;
+    glUseProgram(prog);
 
     unsigned int texture;
     glGenTextures(1, &texture);
@@ -118,6 +117,7 @@ int main() {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    glDeleteProgram(prog);
     glfwTerminate();
     return 0;
 }

@@ -1,7 +1,6 @@
 #include <iostream>
 #include <glad/glad.h>
 
-#include "shader-program.h"
 #include "shader-builder.h"
 
 static GLuint compileShader(const std::string& shaderSource, const GLenum shaderType);
@@ -21,7 +20,7 @@ ShaderBuilder& ShaderBuilder::addShader(
     return *this;
 }
 
-std::optional<ShaderProgram> ShaderBuilder::buildProgram() {
+std::optional<GLuint> ShaderBuilder::build() {
     GLuint shaderProgram = glCreateProgram();
     for (size_t i = 0; i <= m_count; i++) {
         glAttachShader(shaderProgram, m_shaders[i].m_id);
@@ -30,7 +29,7 @@ std::optional<ShaderProgram> ShaderBuilder::buildProgram() {
     GLint linkStatus; 
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &linkStatus);
     if ((GLenum) linkStatus == GL_TRUE) {
-        return ShaderProgram(shaderProgram);
+        return shaderProgram;
     }
         return std::nullopt;
 }
