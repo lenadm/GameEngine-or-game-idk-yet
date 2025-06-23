@@ -12,7 +12,7 @@ add_subdirectory(external/whereami)
 add_executable(${PROJECT_NAME} 
 src/main.cpp
 src/shader-builder.cpp
-src/vao.cpp
+src/vao-builder.cpp
 src/opengl-debug.cpp
 src/asset-path-resolver.cpp
 )

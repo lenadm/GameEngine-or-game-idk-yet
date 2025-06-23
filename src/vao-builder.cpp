@@ -1,45 +1,52 @@
-#include "vao.h"
-#include <iostream>
+#include "vao-builder.h"
+#include <vector>
 
 static size_t getSizeOfGLType(GLenum type);
 
-VAO::VAO() {
+VaoBuilder::VaoBuilder() {
     glGenVertexArrays(1, &m_handle);
 }
 
-size_t VAO::stride() {
+static size_t getStride(std::vector<VaoBuilder::metaData> bufferAttributes) {
     size_t stride = 0;
-    for (VAO::metaData md : m_bufferAttributes) {
+    for (const auto& md : bufferAttributes) {
         stride += (md.length * getSizeOfGLType(md.type)) + md.offset;
     }
     return stride;
 }
 
-void VAO::bindVBO(GLuint VBO) {
+VaoBuilder& VaoBuilder::bindVBO(GLuint VBO) {
     glBindVertexArray(m_handle);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBindVertexArray(0);
+    return *this;
 }
 
-void VAO::bindEBO(GLuint EBO) {
+VaoBuilder& VaoBuilder::bindEBO(GLuint EBO) {
     glBindVertexArray(m_handle);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBindVertexArray(0);
+    return *this;
 }
 
-void VAO::addBufferAttributes(GLuint bufferIdx, int length, GLenum type, size_t offset, bool normalized) {
-    VAO::metaData md = {};
+VaoBuilder& VaoBuilder::addBufferAttributes(GLuint bufferIdx, int length, GLenum type, size_t offset, bool normalized) {
+    VaoBuilder::metaData md = {};
     md.bufferIdx = bufferIdx;
     md.length = length;
     md.normalized = normalized;
     md.offset = offset;
     md.type = type;
     m_bufferAttributes.push_back(md);
+    return *this;
 }
 
-void VAO::setBufferAttributes() {
+VaoBuilder& VaoBuilder::setBufferAttributes() {
+    if (m_isAttributesSet) {
+        return *this;
+    }
+
     glBindVertexArray(m_handle);
-    size_t stride = this->stride();
+    size_t stride = getStride(m_bufferAttributes);
     size_t curOffset = 0;
     for (metaData md : m_bufferAttributes) {
         glVertexAttribPointer(md.bufferIdx, md.length, md.type, md.normalized, stride, (void *) (curOffset + md.offset));
@@ -47,18 +54,8 @@ void VAO::setBufferAttributes() {
         curOffset += (md.length * getSizeOfGLType(md.type)) + md.offset;
     }
     glBindVertexArray(0);
-}
-
-void VAO::bind() {
-    glBindVertexArray(m_handle);
-}
-
-void VAO::unbind() {
-    glBindVertexArray(0);
-}
-
-VAO::~VAO() {
-    glDeleteVertexArrays(1, &m_handle);
+    m_isAttributesSet = true;
+    return *this;
 }
 
 static size_t getSizeOfGLType(GLenum type)

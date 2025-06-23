@@ -9,7 +9,7 @@
 #include <stb_image.h>
 
 #include "shader-builder.h"
-#include "vao.h"
+#include "vao-builder.h"
 #include "opengl-debug.h"
 #include "asset-path-resolver.h"
 
@@ -60,13 +60,13 @@ int main() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleIndices), triangleIndices, GL_STATIC_DRAW);
 
-    VAO vao;
-    vao.bindVBO(VBO);
-    vao.bindEBO(EBO);
-    vao.addBufferAttributes(0, 3, GL_FLOAT);
-    vao.addBufferAttributes(1, 3, GL_FLOAT);
-    vao.addBufferAttributes(2, 2, GL_FLOAT);
-    vao.setBufferAttributes();
+    GLuint VAO = VaoBuilder()
+        .bindVBO(VBO)
+        .bindEBO(EBO)
+        .addBufferAttributes(0, 3, GL_FLOAT)
+        .addBufferAttributes(1, 3, GL_FLOAT)
+        .addBufferAttributes(2, 2, GL_FLOAT)
+        .setBufferAttributes().build();
 
     AssetPathResolver apr;
     apr.populateRegistry();
@@ -109,7 +109,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
 
         glBindTexture(GL_TEXTURE_2D, texture);
-        vao.bind();
+        glBindVertexArray(VAO);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
