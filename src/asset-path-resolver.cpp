@@ -1,9 +1,8 @@
-#include <exception>
+#include <unordered_map>
 #include <iostream>
 #include <cstdlib>
 #include <filesystem>
 #include <whereami.h>
-#include <stack>
 
 #include "asset-path-resolver.h"
 
@@ -15,19 +14,18 @@ void setAssetsRoot();
 
 void AssetPathResolver::populateRegistry() {
     setAssetsRoot();
-    std::stack<fs::path> directoryStack;
-
     for (const auto& entry : fs::recursive_directory_iterator(g_assetsRoot)) {
         if (entry.is_regular_file()) {
             fs::path entryPath = entry.path();
             fs::path relativePath = fs::relative(entryPath, g_assetsRoot);
-            m_registry.insert({entryPath.filename().string(), relativePath});
+            m_registry.insert({entryPath.filename().string(), relativePath.string()});
         }
     }
 }
 
-fs::path AssetPathResolver::resolvePath(std::string name) {
-    return g_assetsRoot / m_registry.at(name);
+std::string AssetPathResolver::resolvePath(std::string name) {
+    fs::path relativePath = fs::path(m_registry.at(name));
+    return (g_assetsRoot / relativePath).string();
 }
 
 void setAssetsRoot() {

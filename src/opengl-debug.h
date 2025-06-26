@@ -1,6 +1,7 @@
 #pragma once
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <iostream>
 
 #ifndef NDEBUG
 #define RUNTIME_ASSERT(cond) \
@@ -10,7 +11,7 @@
                       << __FILE__ << ", line: " << __LINE__ << std::endl; \
             std::abort(); \
         } \
-    } while (0)
+    } while (0);
 
 GLenum glCheckError_(const char *file, int line);
 

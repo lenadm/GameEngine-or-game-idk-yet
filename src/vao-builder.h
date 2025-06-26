@@ -1,6 +1,5 @@
 #include <cstddef>
 #include <glad/glad.h>
-#include <vector>
 
 class VaoBuilder {
 public:
@@ -10,23 +9,18 @@ public:
         GLuint bufferIdx;
         size_t length;
         GLenum type;
-        bool normalized;
         size_t offset;
+        bool normalized;
     };
 
     VaoBuilder& bindVBO(GLuint VBO);
     VaoBuilder& bindEBO(GLuint EBO);
-
     VaoBuilder& addBufferAttributes(GLuint bufferIdx, int length, GLenum type, size_t offset = 0, bool normalized = false);
-    VaoBuilder& setBufferAttributes();
-
-    GLuint build() const { 
-        if (!m_isAttributesSet) return 0;
-        return m_handle;
-    }
+    GLuint build();
 
 private:
     GLuint m_handle;
-    std::vector<metaData> m_bufferAttributes;
+    metaData m_bufferAttributes[16] = {};
+    size_t m_count = 0;
     bool m_isAttributesSet = false;
 };

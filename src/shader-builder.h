@@ -1,11 +1,11 @@
 #include <glad/glad.h>
 #include <string>
-#include <optional>
 
 class ShaderBuilder {
     public:
         ShaderBuilder& addShader(const std::string& shaderSource, GLenum shaderType);
-        std::optional<GLuint> build();
+        ShaderBuilder& addShaderFromPath(const std::string& pathToShader, GLenum shaderType);
+        GLuint build();
         ~ShaderBuilder();
 
         struct ShaderEntry {

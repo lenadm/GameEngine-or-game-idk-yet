@@ -1,18 +1,10 @@
 #include "vao-builder.h"
-#include <vector>
+#include "opengl-debug.h"
 
-static size_t getSizeOfGLType(GLenum type);
+static size_t getSizeOfGLType(GLenum);
 
 VaoBuilder::VaoBuilder() {
     glGenVertexArrays(1, &m_handle);
-}
-
-static size_t getStride(std::vector<VaoBuilder::metaData> bufferAttributes) {
-    size_t stride = 0;
-    for (const auto& md : bufferAttributes) {
-        stride += (md.length * getSizeOfGLType(md.type)) + md.offset;
-    }
-    return stride;
 }
 
 VaoBuilder& VaoBuilder::bindVBO(GLuint VBO) {
@@ -30,32 +22,39 @@ VaoBuilder& VaoBuilder::bindEBO(GLuint EBO) {
 }
 
 VaoBuilder& VaoBuilder::addBufferAttributes(GLuint bufferIdx, int length, GLenum type, size_t offset, bool normalized) {
+    RUNTIME_ASSERT(m_count < 16)
     VaoBuilder::metaData md = {};
     md.bufferIdx = bufferIdx;
     md.length = length;
     md.normalized = normalized;
     md.offset = offset;
     md.type = type;
-    m_bufferAttributes.push_back(md);
+    m_bufferAttributes[m_count] = md;
+    m_count++;
     return *this;
 }
 
-VaoBuilder& VaoBuilder::setBufferAttributes() {
+GLuint VaoBuilder::build() {
     if (m_isAttributesSet) {
-        return *this;
+        return m_handle;
     }
 
     glBindVertexArray(m_handle);
-    size_t stride = getStride(m_bufferAttributes);
+    size_t stride = 0;
+    for (size_t count = 0; count <= m_count; count++) {
+        metaData md = m_bufferAttributes[count];
+        stride += (md.length * getSizeOfGLType(md.type)) + md.offset;
+    }
     size_t curOffset = 0;
-    for (metaData md : m_bufferAttributes) {
+    for (size_t count = 0; count <= m_count; count++) {
+        metaData md = m_bufferAttributes[count];
         glVertexAttribPointer(md.bufferIdx, md.length, md.type, md.normalized, stride, (void *) (curOffset + md.offset));
         glEnableVertexAttribArray(md.bufferIdx);
         curOffset += (md.length * getSizeOfGLType(md.type)) + md.offset;
     }
     glBindVertexArray(0);
     m_isAttributesSet = true;
-    return *this;
+    return m_handle;
 }
 
 static size_t getSizeOfGLType(GLenum type)

@@ -15,6 +15,7 @@ src/shader-builder.cpp
 src/vao-builder.cpp
 src/opengl-debug.cpp
 src/asset-path-resolver.cpp
+src/texture-builder.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE glad glfw opengl32 stb_image whereami)

@@ -1,7 +1,10 @@
 #include <iostream>
 #include <glad/glad.h>
+#include <filesystem>
+#include <fstream>
 
 #include "shader-builder.h"
+#include "opengl-debug.h"
 
 static GLuint compileShader(const std::string& shaderSource, const GLenum shaderType);
 
@@ -9,10 +12,7 @@ ShaderBuilder& ShaderBuilder::addShader(
     const std::string& shaderSource,
     const GLenum shaderType
 ) {
-    if (m_count >= 8) {
-        std::cout << "Warning: tried adding >8 shaders to builder\n";
-        return *this;
-    }
+    RUNTIME_ASSERT(m_count < 8)
 
     m_shaders[m_count].m_id = compileShader(shaderSource, shaderType);
     m_shaders[m_count].m_type = shaderType;
@@ -20,7 +20,23 @@ ShaderBuilder& ShaderBuilder::addShader(
     return *this;
 }
 
-std::optional<GLuint> ShaderBuilder::build() {
+ShaderBuilder& ShaderBuilder::addShaderFromPath(const std::string& path, GLenum shaderType) {
+    RUNTIME_ASSERT(std::filesystem::exists(path))
+    RUNTIME_ASSERT(std::filesystem::is_regular_file(path))
+
+    std::ifstream file(path);
+    if (!file) {
+        std::cout << "Unable to open shader: " + path << "\n";
+        return *this;
+    }
+
+    auto outBuf = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    addShader(outBuf, shaderType);
+    return *this;
+}
+
+
+GLuint ShaderBuilder::build() {
     GLuint shaderProgram = glCreateProgram();
     for (size_t i = 0; i <= m_count; i++) {
         glAttachShader(shaderProgram, m_shaders[i].m_id);
@@ -31,7 +47,7 @@ std::optional<GLuint> ShaderBuilder::build() {
     if ((GLenum) linkStatus == GL_TRUE) {
         return shaderProgram;
     }
-        return std::nullopt;
+    return 0;
 }
 
 ShaderBuilder::~ShaderBuilder() {
