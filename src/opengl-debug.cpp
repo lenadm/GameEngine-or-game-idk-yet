@@ -1,6 +1,14 @@
 #include <iostream>
 #include "opengl-debug.h"
 
+void runtimeAssert_(bool cond, const char* condString, const char* file, int line) {
+    if (!(cond)) { 
+        std::cerr << "Assertion failed: (" << condString << "), file: " 
+                  << file << ", line: " << line << std::endl;
+        std::abort();
+    }
+}
+
 GLenum glCheckError_(const char *file, int line)
 {
     GLenum errorCode;

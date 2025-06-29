@@ -1,17 +1,11 @@
 #pragma once
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <iostream>
 
-#ifndef NDEBUG
-#define RUNTIME_ASSERT(cond) \
-    do { \
-        if (!(cond)) { \
-            std::cerr << "Assertion failed: (" << #cond << "), file: " \
-                      << __FILE__ << ", line: " << __LINE__ << std::endl; \
-            std::abort(); \
-        } \
-    } while (0);
+#ifndef RELEASE_BUILD
+void runtimeAssert_(bool cond, const char* condString, const char* file, int line);
+
+#define RUNTIME_ASSERT(cond) runtimeAssert_(cond, #cond, __FILE__, __LINE__)
 
 GLenum glCheckError_(const char *file, int line);
 

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <glad/glad.h>
-#include <filesystem>
 #include <fstream>
+#include <filesystem>
 
 #include "shader-builder.h"
 #include "opengl-debug.h"
@@ -12,7 +12,7 @@ ShaderBuilder& ShaderBuilder::addShader(
     const std::string& shaderSource,
     const GLenum shaderType
 ) {
-    RUNTIME_ASSERT(m_count < 8)
+    RUNTIME_ASSERT(m_count < 8);
 
     m_shaders[m_count].m_id = compileShader(shaderSource, shaderType);
     m_shaders[m_count].m_type = shaderType;
@@ -21,8 +21,8 @@ ShaderBuilder& ShaderBuilder::addShader(
 }
 
 ShaderBuilder& ShaderBuilder::addShaderFromPath(const std::string& path, GLenum shaderType) {
-    RUNTIME_ASSERT(std::filesystem::exists(path))
-    RUNTIME_ASSERT(std::filesystem::is_regular_file(path))
+    RUNTIME_ASSERT(std::filesystem::exists(path));
+    RUNTIME_ASSERT(std::filesystem::is_regular_file(path));
 
     std::ifstream file(path);
     if (!file) {

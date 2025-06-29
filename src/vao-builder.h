@@ -23,4 +23,6 @@ private:
     metaData m_bufferAttributes[16] = {};
     size_t m_count = 0;
     bool m_isAttributesSet = false;
+    GLuint m_VBO = 0;
+    GLuint m_EBO = 0;
 };

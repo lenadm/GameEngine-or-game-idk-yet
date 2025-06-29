@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -13,9 +14,11 @@
 #include "asset-path-resolver.h"
 #include "texture-builder.h"
 
-void getFramebufferSizeCallback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow* window);
-bool readFromFile(std::string pathToShader, std::string& outBuf);
+struct RenderingContext {
+    GLuint VAO;
+    GLuint VBO;
+    GLuint EBO;
+};
 
 const float verts[] = {
     // positions          // colors           // texture coords
@@ -30,37 +33,30 @@ const unsigned int triangleIndices[] = {
     2, 3, 0,
 };
 
+void initGLFW();
+GLFWwindow* initWindow(int width, int height, const char* name, GLFWframebuffersizefun frameBufferCallback);
+void initGlad();
+GLuint createGLBuffer(GLenum bufType, size_t dataSize, const void* data, GLenum drawType);
+void useTexture(GLenum textureNum, GLuint texture, GLenum textureType);
+void useRenderingContext(GLuint VAO, GLuint VBO, GLuint EBO);
+void useRenderingContext(RenderingContext ctx);
+void getFramebufferSizeCallback(GLFWwindow*, int width, int height);
+void processInput(GLFWwindow* window);
+bool readFromFile(std::string pathToShader, std::string& outBuf);
+
 int main() {
-    if (!glfwInit()) { return 1; }
-    GLFWwindow *window = glfwCreateWindow(1920, 1440, "GameEngine", 0, 0);
-    if (!window) {
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
-
-    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
-        std::cout << "Failed to init GLAD!!!\n";
-        return 1;
-    }
-
+    // Init
+    initGLFW();
+    GLFWwindow* window = initWindow(1920, 1440, "GameEngine", getFramebufferSizeCallback);
+    initGlad();
     ENABLE_DEBUG_OUTPUT();
-
-    glfwSetFramebufferSizeCallback(window, getFramebufferSizeCallback);
-    glViewport(0, 0, 1920, 1080);
-
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
-
-    unsigned int EBO;
-    glGenBuffers(1, &EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleIndices), triangleIndices, GL_STATIC_DRAW);
-
-    GLuint VAO = VaoBuilder()
-        .bindVBO(VBO).bindEBO(EBO)
+    
+    // Setup
+    RenderingContext singleCtx;
+    singleCtx.VBO = createGLBuffer(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+    singleCtx.EBO = createGLBuffer(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangleIndices), triangleIndices, GL_STATIC_DRAW);
+    singleCtx.VAO = VaoBuilder()
+        .bindVBO(singleCtx.VBO).bindEBO(singleCtx.EBO)
         .addBufferAttributes(0, 3, GL_FLOAT)
         .addBufferAttributes(1, 3, GL_FLOAT)
         .addBufferAttributes(2, 2, GL_FLOAT)
@@ -78,11 +74,11 @@ int main() {
         return 1;
     }
 
-    GLuint texture0 = TextureBuilder()
+    GLuint containerTex = TextureBuilder()
         .fromFile(apr.resolvePath("container.jpg"), GL_TEXTURE_2D)
         .freeTexture()
         .build();
-    GLuint texture1 = TextureBuilder()
+    GLuint happyFaceTex = TextureBuilder()
         .fromFile(apr.resolvePath("awesomeface.png"), GL_TEXTURE_2D)
         .freeTexture()
         .build();
@@ -96,22 +92,67 @@ int main() {
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture0);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture1);
+        useTexture(GL_TEXTURE0, containerTex, GL_TEXTURE_2D);
+        useTexture(GL_TEXTURE1, happyFaceTex, GL_TEXTURE_2D);
 
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        useRenderingContext(singleCtx);
+        int EBOLength = sizeof(triangleIndices) / sizeof(triangleIndices[0]);
+        glDrawElements(GL_TRIANGLES, EBOLength, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
-    glDeleteProgram(prog);
     glfwTerminate();
     return 0;
+}
+
+void initGLFW() {
+    if (!glfwInit()) {
+        std::cout << "failed to init glfw\n";
+        std::abort();
+    }
+}
+
+GLFWwindow* initWindow(int width, int height, const char* name, GLFWframebuffersizefun frameBufferCallback) {
+    GLFWwindow *window = glfwCreateWindow(width, height, name, 0, 0);
+    if (!window) {
+        std::cout << "Unable to create window\n";
+        std::abort();
+    }
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, frameBufferCallback);
+    return window;
+}
+
+void initGlad() {
+    if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
+        std::cout << "Failed to init GLAD!!!\n";
+        std::abort();
+    }
+}
+
+GLuint createGLBuffer(GLenum bufType, size_t dataSize, const void* data, GLenum drawType) {
+    GLuint newBuffer;
+    glGenBuffers(1, &newBuffer);
+    glBindBuffer(bufType, newBuffer);
+    glBufferData(bufType, dataSize, data, drawType);
+    return newBuffer;
+}
+
+void useTexture(GLenum textureNum, GLuint texture, GLenum textureType) {
+        glActiveTexture(textureNum);
+        glBindTexture(textureType, texture);
+}
+
+void useRenderingContext(GLuint VAO, GLuint VBO, GLuint EBO) {
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+}
+
+void useRenderingContext(RenderingContext ctx) {
+    useRenderingContext(ctx.VAO, ctx.VBO, ctx.EBO);
 }
 
 void getFramebufferSizeCallback(GLFWwindow*, int width, int height){
@@ -144,3 +185,4 @@ bool readFromFile(std::string pathToShader, std::string& outBuf) {
     outBuf = std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     return true; 
 }
+

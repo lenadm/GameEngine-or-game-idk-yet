@@ -8,21 +8,17 @@ VaoBuilder::VaoBuilder() {
 }
 
 VaoBuilder& VaoBuilder::bindVBO(GLuint VBO) {
-    glBindVertexArray(m_handle);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBindVertexArray(0);
+    m_VBO = VBO;
     return *this;
 }
 
 VaoBuilder& VaoBuilder::bindEBO(GLuint EBO) {
-    glBindVertexArray(m_handle);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBindVertexArray(0);
+    m_EBO = EBO;
     return *this;
 }
 
 VaoBuilder& VaoBuilder::addBufferAttributes(GLuint bufferIdx, int length, GLenum type, size_t offset, bool normalized) {
-    RUNTIME_ASSERT(m_count < 16)
+    RUNTIME_ASSERT(m_count < 16);
     VaoBuilder::metaData md = {};
     md.bufferIdx = bufferIdx;
     md.length = length;
@@ -39,7 +35,13 @@ GLuint VaoBuilder::build() {
         return m_handle;
     }
 
+    if (!m_VBO || !m_EBO) {
+        RUNTIME_ASSERT(0);
+    }
+
     glBindVertexArray(m_handle);
+    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
     size_t stride = 0;
     for (size_t count = 0; count <= m_count; count++) {
         metaData md = m_bufferAttributes[count];
@@ -52,8 +54,10 @@ GLuint VaoBuilder::build() {
         glEnableVertexAttribArray(md.bufferIdx);
         curOffset += (md.length * getSizeOfGLType(md.type)) + md.offset;
     }
-    glBindVertexArray(0);
     m_isAttributesSet = true;
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     return m_handle;
 }
 

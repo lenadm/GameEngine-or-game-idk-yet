@@ -26,6 +26,7 @@ GLuint TextureBuilder::build() {
 }
 
 TextureBuilder& TextureBuilder::fromFile(std::string path, GLenum texType) {
+    stbi_set_flip_vertically_on_load(true);
     m_ownsData = true;
     m_texType = texType;
     int nrChannels; 
@@ -35,6 +36,7 @@ TextureBuilder& TextureBuilder::fromFile(std::string path, GLenum texType) {
         std::cout << "Failed to load texture\n";
     }
     return *this;
+    stbi_set_flip_vertically_on_load(false);
 }
 
 GLenum channelsToGLFormat(int channels) {
@@ -44,6 +46,6 @@ GLenum channelsToGLFormat(int channels) {
         case 3: return GL_RGB;       // RGB
         case 4: return GL_RGBA;      // RGBA
     }
-    RUNTIME_ASSERT(false)
+    RUNTIME_ASSERT(false);
     return 0;
 }
